@@ -1,0 +1,99 @@
+= Like real quick
+
+Get started with ollama and Llama Stack.
+
+== Install and configure
+
+[source,terminal]
+----
+curl -fsSL https://ollama.com/install.sh | sh
+----
+
+[source,terminal]
+----
+ollama run llama3.2:3b-instruct-fp16 --keepalive -1m
+----
+
+Set up a Python env with conda:
+
+[source,terminal]
+----
+conda create -n ollama python=3.10
+conda activate ollama
+pip install -U llama-stack
+pip install chromadb
+chroma run --host localhost --port 8000 --path ./my_chroma_data
+----
+
+== Configure and run Llama Stack
+
+[source,terminal]
+----
+conda activate ollama
+llama stack build --template ollama --image-type conda
+----
+
+Set some env vars (Note inference model is named slightly different):
+
+[source,terminal]
+----
+export OLLAMA_URL="http://localhost:11434"
+export LLAMA_STACK_PORT=8321
+export INFERENCE_MODEL="meta-llama/Llama-3.2-3B-Instruct"
+export SAFETY_MODEL="meta-llama/Llama-Guard-3-1B"
+----
+
+Run Llama Stack:
+
+[source,terminal]
+----
+llama stack run ollama
+   --port $LLAMA_STACK_PORT
+   --env INFERENCE_MODEL=$INFERENCE_MODEL
+   --env SAFETY_MODEL=$SAFETY_MODEL
+   --env OLLAMA_URL=$OLLAMA_URL
+----
+
+== Test using llama-stack-client
+
+Activate the conda env, export env vars, start the llama stack and then:
+
+[source,terminal]
+----
+llama-stack-client configure --endpoint http://localhost:$LLAMA_STACK_PORT
+----
+
+Test using llama-stack-client:
+
+[source,terminal]
+----
+llama-stack-client inference chat-completion --message "Write me a 2-sentence poem about the moon"
+----
+
+== Test using curl
+
+Activate the conda env, export env vars, start the llama stack and then:
+
+[source,terminal]
+----
+curl http://localhost:$LLAMA_STACK_PORT/v1/inference/chat-completion \
+  -H "Content-Type: application/json" \
+  -d @- <<EOF | jq .
+{
+    "model_id": "$INFERENCE_MODEL",
+    "messages": [
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "Write me a 2-sentence poem about the moon"}
+    ]
+}
+EOF
+----
+
+== Test using Python
+
+Activate the conda env, export env vars, start the llama stack and then:
+
+[source,terminal]
+----
+python test_llama_stack.py
+----
