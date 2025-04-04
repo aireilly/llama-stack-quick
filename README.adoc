@@ -11,7 +11,21 @@ curl -fsSL https://ollama.com/install.sh | sh
 
 [source,terminal]
 ----
-ollama run llama3.2:3b-instruct-fp16 --keepalive -1m
+ollama run llama3.2:3b-instruct-fp16 --keepalive -60m
+----
+
+Check running LLMs:
+
+[source,terminal]
+----
+ollama ps
+----
+
+Stop the model:
+
+[source,terminal]
+----
+ollama stop llama3.2:3b-instruct-fp16
 ----
 
 Set up a Python env with conda:
@@ -96,4 +110,61 @@ Activate the conda env, export env vars, start the llama stack and then:
 [source,terminal]
 ----
 python test_llama_stack.py
+----
+
+== Test using Red Hat MaaS
+
+Get a MaaS API key for `meta-llama/Llama-3.1-8B-Instruct`.
+
+Activate the conda env and start the llama stack.
+
+Add API keys and `LLAMA_MAAS_URL` to `.env`. For example:
+
+.dot env file
+[source,ini]
+----
+LLAMA_MAAS_URL=<YOUR_MAAS_APPLICATION_URL>
+LLAMA_MAAS_KEY=<YOUR_MAAS_API_KEY>
+TAVILY_SEARCH_API_KEY=<YOUR_TAVILY_API_KEY>
+----
+
+Export the `.env` variables:
+
+[source,terminal]
+----
+source .env && \
+export LLAMA_MAAS_URL && \
+export LLAMA_MAAS_KEY && \
+export TAVILY_SEARCH_API_KEY
+----
+
+Export required variables:
+
+[source,terminal]
+----
+export OLLAMA_URL="http://localhost:11434"
+export LLAMA_STACK_PORT=8321
+export INFERENCE_MODEL="meta-llama/Llama-3.1-3B-Instruct"
+export SAFETY_MODEL="meta-llama/Llama-Guard-3-1B"
+----
+
+Spin up the LLM:
+
+[source,terminal]
+----
+podman run -it --privileged --rm -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT -v $(pwd):/app/llama-stack-source \
+     docker.io/llamastack/distribution-remote-vllm:0.1.8 --port $LLAMA_STACK_PORT \
+     --env INFERENCE_MODEL=meta-llama/Llama-3.1-8B-Instruct \
+     --env VLLM_URL=$LLAMA_MAAS_URL \
+     --env VLLM_API_TOKEN=$LLAMA_MAAS_KEY \
+     --env VLLM_MAX_TOKENS=200 \
+     --env TAVILY_SEARCH_API_KEY=$TAVILY_SEARCH_API_KEY \
+     --env LLAMA_STACK_PORT=$LLAMA_STACK_PORT
+----
+
+Test using llama-stack-client:
+
+[source,terminal]
+----
+llama-stack-client inference chat-completion --message "What does regret mean?"
 ----
