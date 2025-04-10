@@ -76,11 +76,6 @@ Activate the conda env, export env vars, start the llama stack and then:
 ----
 llama-stack-client configure --endpoint http://localhost:$LLAMA_STACK_PORT
 ----
-+
-[NOTE]
-====
-Skip the API key
-====
 
 Test using llama-stack-client:
 
