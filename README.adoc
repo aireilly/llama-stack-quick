@@ -76,6 +76,11 @@ Activate the conda env, export env vars, start the llama stack and then:
 ----
 llama-stack-client configure --endpoint http://localhost:$LLAMA_STACK_PORT
 ----
++
+[NOTE]
+====
+Skip the API key
+====
 
 Test using llama-stack-client:
 
@@ -112,59 +117,51 @@ Activate the conda env, export env vars, start the llama stack and then:
 python test_llama_stack.py
 ----
 
+== llama-stack-client
+
+Note you need a client version to match the server
+
+[source,terminal]
+----
+pip install llama-stack-client==0.1.8
+----
+
 == Test using Red Hat MaaS
 
 Get a MaaS API key for `meta-llama/Llama-3.1-8B-Instruct`.
-
-Activate the conda env and start the llama stack.
 
 Add API keys and `LLAMA_MAAS_URL` to `.env`. For example:
 
 .dot env file
 [source,ini]
 ----
-LLAMA_MAAS_URL=<YOUR_MAAS_APPLICATION_URL>
-LLAMA_MAAS_KEY=<YOUR_MAAS_API_KEY>
-TAVILY_SEARCH_API_KEY=<YOUR_TAVILY_API_KEY>
+export VLLM_URL=<LLAMA_MAAS_URL>/v1
+export VLLM_API_TOKEN=<MAAS_API_KEY>
+export INFERENCE_MODEL=meta-llama/Llama-3.1-8B-Instruct
+export LLAMA_STACK_PORT=5001
 ----
 
-Export the `.env` variables:
-
-[source,terminal]
-----
-source .env && \
-export LLAMA_MAAS_URL && \
-export LLAMA_MAAS_KEY && \
-export TAVILY_SEARCH_API_KEY
-----
-
-Export required variables:
-
-[source,terminal]
-----
-export OLLAMA_URL="http://localhost:11434"
-export LLAMA_STACK_PORT=8321
-export INFERENCE_MODEL="meta-llama/Llama-3.1-3B-Instruct"
-export SAFETY_MODEL="meta-llama/Llama-Guard-3-1B"
-----
-
-Spin up the LLM:
+Export the `.env` variables. Spin up the server:
 
 [source,terminal]
 ----
 podman run -it --privileged --rm -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT -v $(pwd):/app/llama-stack-source \
-     docker.io/llamastack/distribution-remote-vllm:0.1.8 --port $LLAMA_STACK_PORT \
+     docker.io/llamastack/distribution-remote-vllm:0.1.8 \
+     --port $LLAMA_STACK_PORT \
      --env INFERENCE_MODEL=meta-llama/Llama-3.1-8B-Instruct \
-     --env VLLM_URL=$LLAMA_MAAS_URL \
-     --env VLLM_API_TOKEN=$LLAMA_MAAS_KEY \
+     --env VLLM_URL=$VLLM_URL \
+     --env VLLM_API_TOKEN=$VLLM_API_TOKEN \
      --env VLLM_MAX_TOKENS=200 \
-     --env TAVILY_SEARCH_API_KEY=$TAVILY_SEARCH_API_KEY \
      --env LLAMA_STACK_PORT=$LLAMA_STACK_PORT
 ----
 
-Test using llama-stack-client:
+Test using the llama-stack-client that is compatible with the `llamastack/distribution-remote-vllm` image version, in this case, `0.1.8`:
 
 [source,terminal]
 ----
+llama-stack-client --version
+LLAMA_STACK_PORT=5001
+llama-stack-client configure --endpoint http://localhost:$LLAMA_STACK_PORT
 llama-stack-client inference chat-completion --message "What does regret mean?"
 ----
+
